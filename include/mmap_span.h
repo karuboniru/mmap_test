@@ -17,35 +17,52 @@ private:
   int fd;
 
 public:
-  mmap_tools(std::string filename, bool allow_write, size_t size = 0) {
-    auto openmode = allow_write ? O_RDWR : O_RDONLY;
-    if (allow_write)
-      openmode |= O_CREAT;
-    fd = open(filename.c_str(), openmode, 0644);
-    if (fd == -1) {
-      throw std::runtime_error("open failed");
-    }
-    struct stat64 file_stat;
-    if (fstat64(fd, &file_stat) == -1) {
-      throw std::runtime_error("fstat failed");
-    }
-    if (size && allow_write) {
-      if (file_stat.st_size < size) {
-        if (ftruncate(fd, size) == -1) {
-          throw std::runtime_error("ftruncate failed");
-        }
+  mmap_tools(std::string filename, bool allow_write, size_t count = 0) {
+    try {
+      auto size = count * sizeof(T);
+      auto openmode = allow_write ? O_RDWR : O_RDONLY;
+      if (allow_write)
+        openmode |= O_CREAT;
+      fd = open(filename.c_str(), openmode, 0644);
+      if (fd == -1) {
+        throw std::runtime_error("open failed");
       }
-    } else {
-      size = file_stat.st_size;
-    }
-    if (size == 0) {
-      throw std::runtime_error("size is 0");
-    }
-    m_size = size;
-    auto page_mode = allow_write ? (PROT_READ | PROT_WRITE) : PROT_READ;
-    data = static_cast<T *>(mmap(nullptr, size, page_mode, MAP_SHARED, fd, 0));
-    if (data == MAP_FAILED) {
-      throw std::runtime_error("mmap failed");
+      struct stat64 file_stat;
+      if (fstat64(fd, &file_stat) == -1) {
+        throw std::runtime_error("fstat failed");
+      }
+      if (size) {
+        if (file_stat.st_size < size) {
+          if (allow_write) {
+            if (ftruncate(fd, size) == -1) {
+              throw std::runtime_error("ftruncate failed");
+            }
+          } else {
+            throw std::runtime_error("file size is smaller than requested, "
+                                     "while open in read-only mode");
+          }
+        }
+      } else {
+        size = file_stat.st_size;
+      }
+      if (size == 0) {
+        throw std::runtime_error("size is 0");
+      }
+      m_size = size;
+      auto page_mode = allow_write ? (PROT_READ | PROT_WRITE) : PROT_READ;
+      data =
+          static_cast<T *>(mmap(nullptr, size, page_mode, MAP_SHARED, fd, 0));
+      if (data == MAP_FAILED) {
+        throw std::runtime_error("mmap failed");
+      }
+    } catch (std::exception &e) {
+      if (data != MAP_FAILED) {
+        munmap(data, m_size);
+      }
+      if (fd != -1) {
+        close(fd);
+      }
+      throw e;
     }
   }
   ~mmap_tools() {

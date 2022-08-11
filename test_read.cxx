@@ -7,11 +7,11 @@
 
 int main(int argc, const char *argv[]) {
   try {
-    mmap_tools<int> m("test.bin", false, 1073741824 * sizeof(int));
+    mmap_tools<int> m("test.bin", false);
     // for (auto &&i : m) {
     std::cout << m[128] << std::endl;
     // }
-  } catch (std::exception e) {
+  } catch (std::exception & e) {
     std::cout << e.what() << std::endl;
   }
 }
