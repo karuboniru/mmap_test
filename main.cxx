@@ -17,7 +17,7 @@ int main(int argc, const char *argv[]) {
     for (auto &&i : m) {
       i = dis(gen);
     }
-  } catch (std::exception & e) {
+  } catch (std::runtime_error & e) {
     std::cout << e.what() << std::endl;
   }
 }

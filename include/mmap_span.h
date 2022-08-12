@@ -55,7 +55,7 @@ public:
       if (data == MAP_FAILED) {
         throw std::runtime_error("mmap failed");
       }
-    } catch (std::exception &e) {
+    } catch (std::runtime_error &e) {
       if (data != MAP_FAILED) {
         munmap(data, m_size);
       }
