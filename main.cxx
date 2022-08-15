@@ -7,7 +7,7 @@
 
 int main(int argc, const char *argv[]) {
   try {
-    mmap_tools<int> m(
+    mmapio<int> m(
         "test.bin", true,
         1073741824); // 4GB file, can be bigger than physical memory
     std::random_device rd;

@@ -7,7 +7,7 @@
 
 int main(int argc, const char *argv[]) {
   try {
-    mmap_tools<int> m("test.bin", false);
+    mmapio<int> m("test.bin", false);
     std::cout << m[128] << std::endl;
   } catch (std::runtime_error &e) {
     std::cout << e.what() << std::endl;

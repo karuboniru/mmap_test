@@ -10,14 +10,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-template <typename T> class mmap_tools {
+template <typename T> class mmapio {
 private:
   T *data;
   size_t m_size;
   int fd;
 
 public:
-  mmap_tools(std::string filename, bool allow_write, size_t count = 0) {
+  mmapio(std::string filename, bool allow_write, size_t count = 0) {
     try {
       auto size = count * sizeof(T);
       auto openmode = allow_write ? O_RDWR : O_RDONLY;
@@ -65,7 +65,16 @@ public:
       throw e;
     }
   }
-  ~mmap_tools() {
+  mmapio(const mmapio &) = delete;
+  mmapio(mmapio &&other) {
+    data = other.data;
+    m_size = other.m_size;
+    fd = other.fd;
+    other.data = nullptr;
+    other.m_size = 0;
+    other.fd = MAP_FAILED;
+  }
+  ~mmapio() {
     if (munmap(data, m_size) == -1) {
       std::cerr << "munmap failed" << std::endl
                 << "errno: " << errno << std::endl;
